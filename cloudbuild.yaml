@@ -1,0 +1,43 @@
+steps:
+  # Docker イメージのビルド
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/dev-streamlit-repo/streamlit-app",
+        ".",
+      ]
+
+  # ビルドしたイメージをArtifact Registryにプッシュ
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/dev-streamlit-repo/streamlit-app",
+      ]
+
+  # Cloud Runにデプロイ
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image"
+      - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/dev-streamlit-repo/streamlit-app"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _SERVICE_NAME: streamlit-quick-started
+  _REGION: asia-northeast1
+
+images:
+  - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/dev-streamlit-repo/streamlit-app"
